@@ -7,7 +7,7 @@
 	<packaging>war</packaging>
 	<name>AGRIS Api</name>
 	<description>Example of spring elasticsearch</description>
-
+ 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.7</java.version>
