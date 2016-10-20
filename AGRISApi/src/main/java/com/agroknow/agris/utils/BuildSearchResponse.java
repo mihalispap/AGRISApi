@@ -72,16 +72,16 @@ public class BuildSearchResponse {
 		SearchResponse response = 
 				searchRequestBuilder
 				.setQuery(bq)
-				.addAggregation(AggregationBuilders.terms("authors")
-						.field("dct:creator.foaf:Person.foaf:name.raw").size(0).order(Terms.Order.count(false)))
-                .addAggregation(AggregationBuilders.terms("types")
-                		.field("dct:type.raw").size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("resource-types").field("dct:type.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("subjects").field("dc:subject.value.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("sources").field("dct:source.rdf:resource.raw")
-                		.size(0).order(Terms.Order.count(false)))
+				//.addAggregation(AggregationBuilders.terms("authors")
+				//		.field("dct:creator.foaf:Person.foaf:name.raw").size(0).order(Terms.Order.count(false)))
+                //.addAggregation(AggregationBuilders.terms("types")
+                //		.field("dct:type.raw").size(0).order(Terms.Order.count(false)))
+	    		//.addAggregation(AggregationBuilders.terms("resource-types").field("dct:type.raw")
+                //		.size(0).order(Terms.Order.count(false)))
+	    		//.addAggregation(AggregationBuilders.terms("subjects").field("dc:subject.value.raw")
+                //		.size(0).order(Terms.Order.count(false)))
+	    		//.addAggregation(AggregationBuilders.terms("sources").field("dct:source.rdf:resource.raw")
+                //		.size(0).order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("langs").field("dct:language")
                 		.size(0).order(Terms.Order.count(false)))
 				.setFrom(page*facet_size)
@@ -122,16 +122,12 @@ public class BuildSearchResponse {
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":["
 					//+ "	\""+hashed+"\""
-				+"{"+buildFacet(response, "resource-types", page)+""
-				//+ "	{\"facet_name\":\"sources\",\"fid\":\""+hashed+"so\"}"
-				+",{"+buildFacet(response, "sources", page)+""
-				+",{"+buildFacet(response, "authors", page)+""
-				//+ "	{\"facet_name\":\"authors\",\"fid\":\""+hashed+"au\"}"
-				+",{"+buildFacet(response, "subjects", page)+""
-				//+ "	{\"facet_name\":\"subjects\",\"fid\":\""+hashed+"su\"}"
-				+",{"+buildFacet(response, "langs", page);//+""
-				//+ "	{\"facet_name\":\"langs\",\"fid\":\""+hashed+"la\"}"
-				//+ "],\"results\":[";
+				//+"{"+buildFacet(response, "resource-types", page)+""
+				//+",{"+buildFacet(response, "sources", page)+""
+				//+",{"+buildFacet(response, "authors", page)+""
+				//+",{"+buildFacet(response, "subjects", page)+""
+				//+",{"+buildFacet(response, "langs", page)
+				;
 		 
 		//result+=hits;
 		result+="]}";

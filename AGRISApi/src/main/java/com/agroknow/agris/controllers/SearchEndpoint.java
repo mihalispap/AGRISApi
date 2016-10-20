@@ -1227,9 +1227,6 @@ public class SearchEndpoint {
 		else
 			response_head.setContentType(new MediaType("application","json"));
 		
-		
-		
-		
 		boolean mongo_up=true;
 		
 		try
@@ -1300,7 +1297,7 @@ public class SearchEndpoint {
 			//return "{\"error\":\"unable to process request. have you done such a search query?\"}";
 		}
 		
-		System.out.println("i reached here");
+		//System.out.println("i reached here");
 		
 		Settings settings = ImmutableSettings.settingsBuilder()
 		        .put("cluster.name", "agroknow").build();
@@ -1319,11 +1316,9 @@ public class SearchEndpoint {
 			
 			QueryBuilder query = null;
 
-
 			BoolQueryBuilder build_o =QueryBuilders.boolQuery();
 			BoolQueryBuilder build_child =QueryBuilders.boolQuery();
 			BoolQueryBuilder build_enhanced=QueryBuilders.boolQuery();
-			
 			
 		    List<FilterBuilder> filters=new LinkedList<>();
 		    
@@ -1338,8 +1333,7 @@ public class SearchEndpoint {
 			catch(Exception e)
 			{
 				similarity=(float) 0.75;
-			}
-				
+			}				
 
 			String keywordE=parser.parseKeywordEnhanced(search_query);
 			if(!keywordE.isEmpty())
@@ -1973,7 +1967,7 @@ public class SearchEndpoint {
 					build_o.must(QueryBuilders.termQuery("language.value", values[i]));*/
 			}
 
-			System.out.println("i reached here22");
+			//System.out.println("i reached here22");
 			  
 			BuildSearchResponse builder=new BuildSearchResponse();
 			
@@ -1986,7 +1980,7 @@ public class SearchEndpoint {
 
 		//client.close();
 
-			System.out.println("i reached here33");
+			//System.out.println("i reached here33");
 
 		if(format.equals("xml"))
 		{
