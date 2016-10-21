@@ -29,6 +29,9 @@ import org.elasticsearch.search.facet.Facet;
 import org.elasticsearch.search.facet.FacetBuilders;
 import org.elasticsearch.search.facet.terms.TermsFacet;
 import org.elasticsearch.search.facet.terms.TermsFacetBuilder;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class BuildSearchResponse {
 
@@ -336,10 +339,38 @@ public class BuildSearchResponse {
 		{
 			
 			String id=hit.getId();
-			//System.out.println(counter+") is:"+id);
+
+			String fulltext="";
 			
-			//hits+=specific.getSourceAsString();
-			hits+=hit.getSourceAsString();
+			try 
+			{
+				JSONObject json = (JSONObject) new JSONParser().parse(hit.getSourceAsString());
+				
+				String tweet_id=((JSONObject)json.get("opinions")).get("tid").toString();
+				
+				AGRISMongoDB mongo = new AGRISMongoDB();
+				fulltext = mongo.fetchTweet(tweet_id);
+				
+				//System.out.println(fulltext);
+			} 
+			catch (ParseException e) 
+			{
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			}
+			
+			
+			StringBuilder source_value=new StringBuilder(hit.getSourceAsString());
+			
+			source_value.replace(hit.getSourceAsString().lastIndexOf("}"), 
+					hit.getSourceAsString().lastIndexOf("}") + 1,
+					",\"score\":"+hit.getScore()+
+					",\"detailed\":"+fulltext+
+						"}" );
+			
+			//hits+=hit.getSourceAsString();
+			
+			hits+=source_value.toString();
 			hits+=",";
 			
 			//hits+="UNTIL|||";
@@ -389,7 +420,7 @@ public class BuildSearchResponse {
 				///+",{"+buildFacet(response, "langs")+""
 				//+ "	{\"facet_name\":\"langs\",\"fid\":\""+hashed+"la\"}"
 				+ ",\"results\":[";
-		 
+		
 		result+=hits;
 		result+="]}";
 		result=result.replace(",]}", "]}");

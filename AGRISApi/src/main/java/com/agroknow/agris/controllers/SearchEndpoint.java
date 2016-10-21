@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.agroknow.agris.response.examples.ResponseABSA;
 import com.agroknow.agris.utils.AESencr;
 import com.agroknow.agris.utils.AGRISMongoDB;
 import com.agroknow.agris.utils.BuildSearchResponse;
@@ -58,6 +59,8 @@ import com.mongodb.MongoClient;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 @CrossOrigin
 @RestController
@@ -2003,12 +2006,16 @@ public class SearchEndpoint {
 	}
 	
 	
-	
-
 	@ApiOperation(value = "Search sentiment analyzed tweets")
+	@ApiResponses(value = { 
+            @ApiResponse(code = 200, message = "Success", response = ResponseABSA.class),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Not Found"),
+            @ApiResponse(code = 500, message = "Failure")}) 
 	@RequestMapping( value="/search-absa", method={RequestMethod.GET},
 		/*produces={"application/xml","application/json"}*/
-			produces="text/plain")
+			produces="*/*")
 	@ApiImplicitParams({
 		@ApiImplicitParam(
     			name = "freetext[TODO-search-on-aspect-categories]", 
@@ -2023,17 +2030,17 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="positiveORneutral"),
+    			defaultValue="positiveORnegative"),
 		@ApiImplicitParam(
     			name = "from", 
-    			value = "filter results by those created after this date", 
+    			value = "tweets >= this date, format YYYY-MM-DD (-MM-DD, are optional)", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue=""),
+    			defaultValue="2016-03-16"),
 		@ApiImplicitParam(
     			name = "to", 
-    			value = "filter results by those before this date", 
+    			value = "tweets <= this date, format YYYY-MM-DD (-MM-DD, are optional)", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
@@ -2044,7 +2051,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue=""),
+    			defaultValue="123OR456"),
 		@ApiImplicitParam(
     			name = "page", 
     			value = "page of the results (0,1...)", 
@@ -2159,9 +2166,7 @@ public class SearchEndpoint {
 
 			String polarity=parser.parsePolarity(request);
 			if(!polarity.isEmpty())
-			{
-
-				
+			{		
 				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
 				String or_values[]=polarity.split("OR");
 				for(int i=0;i<or_values.length;i++)
@@ -2197,7 +2202,93 @@ public class SearchEndpoint {
 				
 			}
 			
+			String user_group=parser.parseUserGroup(request);
 			
+			//System.out.println("UG:"+user_group);
+			
+			if(!user_group.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=user_group.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					//System.out.println(or_values[i]);
+					
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("user_group", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("user_group", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+			
+			String from_date=parser.parseFromDate(request);
+			String to_date=parser.parseToDate(request);
+			if(!from_date.isEmpty() || !to_date.isEmpty())
+			{
+								
+				/*if(from_date.isEmpty())
+					from_date=to_date;
+				if(to_date.isEmpty())
+					to_date=from_date;*/
+				
+				if(from_date.isEmpty())
+					from_date="50";
+				if(to_date.isEmpty())
+					to_date="9999";
+
+				if(from_date.length()<10)
+				{
+					if(from_date.length()==4)
+						from_date+="-01-01";
+					else if(from_date.length()==7)
+						from_date+="01";
+				}
+				
+				if(to_date.length()<10)
+				{
+					if(to_date.length()==4)
+						to_date+="-12-31";
+					else if(to_date.length()==7)
+						to_date+="31";
+				}
+								
+				build_child.must(
+						QueryBuilders
+						.rangeQuery("created_at")
+						.gte(from_date)
+						.lte(to_date)
+						);	
+					
+				/*filters.add(FilterBuilders
+						.rangeFilter("date")
+						.gte(from_date)
+						.lte(to_date));*/
+			}
+			  
 			
 			
 			

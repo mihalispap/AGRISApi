@@ -61,7 +61,7 @@ public class AGRISMongoDB {
 		
 		searchQuery.put("id", Long.parseLong(id));
 		
-		System.out.println(searchQuery.toString());
+		//System.out.println(searchQuery.toString());
 		
 		BasicDBObject proj = new BasicDBObject();
 		proj.put("_id",0);
@@ -69,7 +69,9 @@ public class AGRISMongoDB {
 		proj.put("id",1);
 		proj.put("retweet_count",1);
 		proj.put("geo",1);
-		proj.put("created_at", 1);		
+		proj.put("lang",1);
+		proj.put("user_id",1);
+		//proj.put("created_at", 1);		
 		
 		DBCursor cursor = table.find(searchQuery,proj);
 
