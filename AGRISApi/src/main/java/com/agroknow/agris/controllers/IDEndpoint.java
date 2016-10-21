@@ -43,7 +43,7 @@ import io.swagger.annotations.ApiOperation;
 
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@CrossOrigin
+@CrossOrigin(origins = "*")
 @RestController
 public class IDEndpoint {
 

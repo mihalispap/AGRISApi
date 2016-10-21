@@ -7,8 +7,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
 public class ESClient {
-
-	public static String server="83.212.100.195";
+	
+	public static String server="localhost";
+	//public static String server="83.212.100.195";
 	public static Settings settings = ImmutableSettings.settingsBuilder()
     	.put("cluster.name", "agroknow").build();
 	public void ESClient()

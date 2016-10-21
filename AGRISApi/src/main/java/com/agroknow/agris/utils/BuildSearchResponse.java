@@ -70,28 +70,40 @@ public class BuildSearchResponse {
 		bq.must(qb);
 		bq.must(build_enhanced);
 		
+		long ctime=System.currentTimeMillis();
 		
 		//System.out.println();
 		SearchResponse response = 
 				searchRequestBuilder
 				.setQuery(bq)
-				//.addAggregation(AggregationBuilders.terms("authors")
-				//		.field("dct:creator.foaf:Person.foaf:name.raw").size(0).order(Terms.Order.count(false)))
-                //.addAggregation(AggregationBuilders.terms("types")
-                //		.field("dct:type.raw").size(0).order(Terms.Order.count(false)))
-	    		//.addAggregation(AggregationBuilders.terms("resource-types").field("dct:type.raw")
-                //		.size(0).order(Terms.Order.count(false)))
-	    		//.addAggregation(AggregationBuilders.terms("subjects").field("dc:subject.value.raw")
-                //		.size(0).order(Terms.Order.count(false)))
-	    		//.addAggregation(AggregationBuilders.terms("sources").field("dct:source.rdf:resource.raw")
-                //		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("langs").field("dct:language")
-                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("authors")
+						.field("dct:creator.foaf:Person.foaf:name.raw")
+						.size(page*facet_size+facet_size)
+						.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.terms("types")
+                		.field("dct:type.raw")
+                		.size(0)
+                		.order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("subjects")
+	    				.field("dc:subject.value.raw")
+                		.size(10)
+                		.order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("sources")
+	    				.field("dct:source.rdf:resource.raw")
+                		.size(page*facet_size+facet_size)
+                		.order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("langs")
+	    				.field("dct:language")
+                		.size(page*facet_size+facet_size)
+                		.order(Terms.Order.count(false)))
 				.setFrom(page*facet_size)
 				.setSize(facet_size)
 				.execute()
 				.actionGet();
 
+		//System.out.println("Search response took me:"+(System.currentTimeMillis()-ctime));
+		
+		ctime=System.currentTimeMillis();
 		
 		int total=0;
 				
@@ -103,6 +115,7 @@ public class BuildSearchResponse {
 					//+ ",\"results\":[]"
 					+ "}";//+bq.toString();
 		
+		/*
 		String input=request.getRequestURI()+"?"+request.getQueryString();
 		AESencr aes = new AESencr();
 		
@@ -117,6 +130,7 @@ public class BuildSearchResponse {
 			e.printStackTrace();
 			hashed="error";
 		}
+		*/
 		
 		//System.out.println(1);
 		String result="{\"total\":5"
@@ -125,20 +139,22 @@ public class BuildSearchResponse {
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":["
 					//+ "	\""+hashed+"\""
-				//+"{"+buildFacet(response, "resource-types", page)+""
-				//+",{"+buildFacet(response, "sources", page)+""
-				//+",{"+buildFacet(response, "authors", page)+""
-				//+",{"+buildFacet(response, "subjects", page)+""
-				//+",{"+buildFacet(response, "langs", page)
+				+"{"+buildFacet(response, "types", page)+""
+				+",{"+buildFacet(response, "sources", page)+""
+				+",{"+buildFacet(response, "authors", page)+""
+				+",{"+buildFacet(response, "subjects", page)+""
+				+",{"+buildFacet(response, "langs", page)
 				;
 		 
+		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
+		
 		//result+=hits;
 		result+="]}";
 		result=result.replace(",]}", "]}");
 		//System.out.println(1);
 		//result=bq.toString()+result;
 		
-		System.out.println(result);
+		//System.out.println(result);
 		
 		return result;
 	}
@@ -492,6 +508,9 @@ public class BuildSearchResponse {
 
 	public String buildFacet(SearchResponse response, String facet_name, int from)
 	{
+		
+		long ctime=System.currentTimeMillis();
+		
 		Terms  terms = response.getAggregations().get(facet_name);
 		List<Bucket> bucketList=new ArrayList<Bucket>();
 
@@ -526,6 +545,8 @@ public class BuildSearchResponse {
 		
 		result+="]}";
 		result=result.replace(",]}", "]}");
+		
+		//System.out.println("Facet:"+facet_name+", took:"+(System.currentTimeMillis()-ctime));
 		
 		return result;
 	}

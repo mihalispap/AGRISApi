@@ -18,7 +18,8 @@ import com.mongodb.MongoClientOptions;
 
 public class AGRISMongoDB {
 
-	public static String server="83.212.100.195";
+	//public static String server="83.212.100.195";
+	public static String server="localhost";
 	
 	private MongoClient connect()
 	{
