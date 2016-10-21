@@ -82,11 +82,11 @@ public class BuildSearchResponse {
 						.order(Terms.Order.count(false)))
                 .addAggregation(AggregationBuilders.terms("types")
                 		.field("dct:type.raw")
-                		.size(0)
+                		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("subjects")
 	    				.field("dc:subject.value.raw")
-                		.size(10)
+                		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("sources")
 	    				.field("dct:source.rdf:resource.raw")
@@ -508,7 +508,6 @@ public class BuildSearchResponse {
 
 	public String buildFacet(SearchResponse response, String facet_name, int from)
 	{
-		
 		long ctime=System.currentTimeMillis();
 		
 		Terms  terms = response.getAggregations().get(facet_name);
