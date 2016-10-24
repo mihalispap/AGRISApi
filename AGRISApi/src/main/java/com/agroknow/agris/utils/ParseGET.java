@@ -139,7 +139,7 @@ public class ParseGET {
 		
 		return "";
 	}
-	
+
 	public String parseSource(String input)
 	{
 		String value="";
@@ -152,6 +152,95 @@ public class ParseGET {
 			String inner[]=values[i].split("=");
 			
 			if(inner[0].equals("source"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parsePolarity(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search-absa?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("polarity"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseUserGroup(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search-absa?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("user_group"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseToDate(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search-absa?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("to"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+	
+
+	public String parseFromDate(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search-absa?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("from"))
 			{
 				if(inner.length>1)
 					return inner[1];

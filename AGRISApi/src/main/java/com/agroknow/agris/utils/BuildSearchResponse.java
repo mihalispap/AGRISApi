@@ -36,7 +36,7 @@ import org.json.simple.parser.ParseException;
 public class BuildSearchResponse {
 
 	private int page_size=10;
-	private int facet_size=5;
+	private int facet_size=15;
 
 	public String buildFrom_betaFacets(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
@@ -160,6 +160,94 @@ public class BuildSearchResponse {
 	}
 
 
+	public String buildFrom_betaABSA_Facets(Client client, BoolQueryBuilder build_o, 
+			BoolQueryBuilder build_child, int page, boolean parent_check,
+			BoolQueryBuilder build_enhanced, HttpServletRequest request )
+	{
+
+		//System.out.println("STARTING");
+		
+		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
+	    		.setIndices("sa_tweets");
+		
+		QueryBuilder qb = null;
+
+		BoolQueryBuilder bq=QueryBuilders.boolQuery();
+		
+		
+		if(!build_o.hasClauses() && !build_child.hasClauses() && !build_enhanced.hasClauses())
+			parent_check=true;
+		
+		parent_check=false;
+		
+		qb=build_o;
+		
+		bq.must(build_child);
+		bq.must(qb);
+		bq.must(build_enhanced);
+		
+		
+		//System.out.println();
+		SearchResponse response = 
+				searchRequestBuilder
+				.setQuery(bq)
+				.addAggregation(AggregationBuilders.terms("polarity")
+						.field("opinions.absa.polarity")
+                		.size(page*facet_size+facet_size)
+                		.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.terms("usergroup")
+                		.field("opinions.user_group")
+                		.size(page*facet_size+facet_size)
+                		.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.terms("aspect_category")
+                		.field("opinions.absa.aspect_category")
+                		.size(page*facet_size+facet_size)
+                		.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.dateHistogram("dates")
+                		.field("opinions.created_at")
+                		.interval(DateHistogram.Interval.YEAR)
+                		.format("yyyy")
+                		)
+				.setFrom(page*page_size)
+				.setSize(page_size)
+				.execute()
+				.actionGet();
+		
+		if(response.getHits().getTotalHits()==0)
+			return "{\"total\":0,\"page\":0,\"page_size:\":0"
+					+",\"time_elapsed\":"+
+						((double)response.getTookInMillis()/1000)
+					+",\"facets\":[]"
+					+ ",\"results\":[]"
+					+ "}";//+bq.toString();
+		
+		
+		
+		String result="{\"total\":4"
+				+",\"page\":"+page
+				+",\"page_size\":"+facet_size
+				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
+				+",\"facets\":["
+					//+ "	\""+hashed+"\""
+				+"{"+buildFacet(response, "polarity", page)+""
+				+",{"+buildFacet(response, "usergroup", page)+""
+				+",{"+buildFacet(response, "aspect_category", page)+""
+				+",{"+buildFacetHistogram(response, "dates",page)+""
+				;
+		 
+		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
+		
+		//result+=hits;
+		result+="]}";
+		result=result.replace(",]}", "]}");
+		
+		return result;
+	}
+
+
+	
+	
+	
 	public String buildFrom_beta(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
 			BoolQueryBuilder build_enhanced, HttpServletRequest request )
@@ -506,6 +594,49 @@ public class BuildSearchResponse {
 		return result;
 	}
 
+
+	public String buildFacetHistogram(SearchResponse response, String facet_name, int from)
+	{
+		DateHistogram agg=response.getAggregations().get(facet_name);
+		String fValue="";
+		int size=-1;
+		for(DateHistogram.Bucket entry : agg.getBuckets())
+		{
+			size++;
+			if(size<from*facet_size)
+				continue;
+			
+			String key=entry.getKey();
+			DateTime keyAsDate=entry.getKeyAsDate();
+			long docCount=entry.getDocCount();
+			
+
+			if(key.equals("") || 
+					key.isEmpty() ||
+					key=="")
+				continue;
+			
+			fValue+="{\"value\":\""+key+"\", \"count\":"+
+					docCount+"},";
+			
+			if(size>(from+1)*facet_size)
+				break;
+			
+		}
+		
+		String result="\"total\":"+size+
+				",\"facet_name\":\""+facet_name+"\""+
+		",\"results\":["+fValue;
+		
+		result+="]}";
+		result=result.replace(",]}", "]}");
+		
+		return result;
+		
+	}
+	
+
+	
 	public String buildFacet(SearchResponse response, String facet_name, int from)
 	{
 		long ctime=System.currentTimeMillis();
@@ -533,7 +664,7 @@ public class BuildSearchResponse {
 			 * 
 			 * 		perhaps resumption token??
 			 * */
-			if(size>facet_size)
+			if(size>=facet_size)
 				break;
 		}
 		

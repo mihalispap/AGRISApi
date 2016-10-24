@@ -2005,7 +2005,6 @@ public class SearchEndpoint {
 	    
 	}
 	
-	
 	@ApiOperation(value = "Search sentiment analyzed tweets")
 	@ApiResponses(value = { 
             @ApiResponse(code = 200, message = "Success", response = ResponseABSA.class),
@@ -2298,6 +2297,324 @@ public class SearchEndpoint {
 			//results=builder.buildFrom(client,build_o,filters,page,search_parent);
 			
 			results=builder.buildFrom_betaABSA(client,build_o,build_child,
+					page,search_parent, build_enhanced, request);
+
+		//client.close();
+		
+		if(format.equals("xml"))
+		{
+			ToXML converter=new ToXML();
+			results=converter.convertToXMLFreeText(results);
+		}
+		
+		if(mongo_up)
+			mongodb.cacheResponse(request, results);
+		
+		//mongodb.
+		
+		//results="";
+		//return results;
+		
+		return new ResponseEntity<String>(results, response_head, HttpStatus.CREATED);
+	    
+			
+			
+			
+	}
+	
+	
+	@ApiOperation(value = "Facets on ABSA")
+	/*@ApiResponses(value = { 
+            @ApiResponse(code = 200, message = "Success", response = ResponseABSA.class),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Not Found"),
+            @ApiResponse(code = 500, message = "Failure")}) */
+	@RequestMapping( value="/search-absa-facets", method={RequestMethod.GET},
+		/*produces={"application/xml","application/json"}*/
+			produces="*/*")
+	@ApiImplicitParams({
+		@ApiImplicitParam(
+    			name = "fid", 
+    			value = "facet hash id return by the searc-absa endpoint", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="aupMqDaEBFZrSUCl2iFKxm5kcMYJETN/LkAlNGF3hzP8VggxKixRhqtNoFhSt+23AGdIkOAPTS6Z$$$___XTyc88zZ1DjNk/9GIKYt3pMot8rcfo7Qreg3BK9LIZiQuhLdLp0l+tz8KEDj6nOK0Xp9elunYM8w$$$___c4CBQZrbkuajTwqGWc4="),
+		@ApiImplicitParam(
+    			name = "page", 
+    			value = "page of the results (0,1...)", 
+    			required = false, 
+    			dataType = "int", 
+    			paramType = "query", 
+    			defaultValue="0"),
+		@ApiImplicitParam(
+    	    	name = "apikey", 
+    	    	value = "apikey", 
+    	    	required = true, 
+    	    	dataType = "string", 
+    	    	paramType = "query", 
+    	    	defaultValue="agroknow"),
+		@ApiImplicitParam(
+    			name = "format", 
+    			value = "output format", 
+    			required = true, 
+    			dataType = "string", 
+    			paramType = "query",
+    			defaultValue="json"),
+		@ApiImplicitParam(
+    			name = "cache", 
+    			value = "use cache", 
+    			required = true, 
+    			dataType = "boolean", 
+    			paramType = "query",
+    			defaultValue="true")
+	})
+	ResponseEntity<String> search_absa_facets(HttpServletRequest request) throws UnknownHostException { 
+		
+		double init_time=(double)System.currentTimeMillis()/1000;
+		
+		ParseGET parser=new ParseGET();
+		
+		String apikey=parser.parseApiKey(request);
+		
+		AGRISMongoDB mongodb = new AGRISMongoDB();
+		
+		boolean mongo_up=true;
+		
+		String format;
+		//ParseGET parser=new ParseGET();
+		format=parser.parseFormat(request);
+		
+		HttpHeaders response_head=new HttpHeaders();
+		
+		if(format.equals("xml"))
+			response_head.setContentType(new MediaType("application","xml"));
+		else
+			response_head.setContentType(new MediaType("application","json"));
+		
+		
+		try
+		{
+			if(!mongodb.isValidApiKey(apikey))
+			{
+				return new ResponseEntity<String>("{\"error\":\"Api validation Error\"}", response_head, HttpStatus.CREATED);
+			}
+			
+			mongodb.addPoints(apikey, "search-facet", request);
+			
+			try
+			{
+				boolean use_cache=parser.parseCache(request);			
+				
+				if(use_cache)
+				{
+					String cached = mongodb.checkCache(request);
+					if(!cached.isEmpty())
+					{
+						System.out.println("CACHE HIT!");			
+						double end_time=(double)System.currentTimeMillis()/1000;
+						//System.out.println("Took:"+(double)(end_time-init_time));
+						//return cached;
+						return new ResponseEntity<String>(cached, response_head, HttpStatus.CREATED);
+
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		catch(Exception e)
+		{
+			mongo_up=false;
+		}
+		
+
+		String fid="";
+		String search_query="";
+		try
+		{
+			fid = parser.parseFID(request);
+			search_query=mongodb.getFacetQuery(fid);
+			
+			//System.out.println(fid+" matches to:"+search_query);
+			
+		}
+		catch(Exception e)
+		{
+			AESencr aes = new AESencr();
+			try 
+			{
+				search_query=aes.decrypt(fid);
+			} 
+			catch (Exception e1) 
+			{
+				return new ResponseEntity<String>(
+						"{\"error\":\"unable to process request. have you done such a search query?\"}",response_head,HttpStatus.CREATED);
+			}
+			//return "{\"error\":\"unable to process request. have you done such a search query?\"}";
+		}
+		
+		
+		
+		Settings settings = ImmutableSettings.settingsBuilder()
+		        .put("cluster.name", "agroknow").build();
+			
+		Client client = ESClient.client;
+		
+		String results="";
+
+		
+		BoolQueryBuilder build =QueryBuilders.boolQuery();
+		
+		QueryBuilder query = null;
+		boolean search_parent=false;
+		BoolQueryBuilder build_o =QueryBuilders.boolQuery();
+		BoolQueryBuilder build_child =QueryBuilders.boolQuery();
+		BoolQueryBuilder build_enhanced=QueryBuilders.boolQuery();
+				
+			int page=parser.parsePage(request);
+			//int fuzzy;
+			GetConfig config = new GetConfig();
+			//double similarity;
+			
+
+			String polarity=parser.parsePolarity(search_query);
+			if(!polarity.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=polarity.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("polarity", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("polarity", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+			
+			String user_group=parser.parseUserGroup(search_query);
+			
+			//System.out.println("UG:"+user_group);
+			
+			if(!user_group.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=user_group.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					//System.out.println(or_values[i]);
+					
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("user_group", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("user_group", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+			
+			String from_date=parser.parseFromDate(search_query);
+			String to_date=parser.parseToDate(search_query);
+			if(!from_date.isEmpty() || !to_date.isEmpty())
+			{
+								
+				/*if(from_date.isEmpty())
+					from_date=to_date;
+				if(to_date.isEmpty())
+					to_date=from_date;*/
+				
+				if(from_date.isEmpty())
+					from_date="50";
+				if(to_date.isEmpty())
+					to_date="9999";
+
+				if(from_date.length()<10)
+				{
+					if(from_date.length()==4)
+						from_date+="-01-01";
+					else if(from_date.length()==7)
+						from_date+="01";
+				}
+				
+				if(to_date.length()<10)
+				{
+					if(to_date.length()==4)
+						to_date+="-12-31";
+					else if(to_date.length()==7)
+						to_date+="31";
+				}
+								
+				build_child.must(
+						QueryBuilders
+						.rangeQuery("created_at")
+						.gte(from_date)
+						.lte(to_date)
+						);	
+					
+				/*filters.add(FilterBuilders
+						.rangeFilter("date")
+						.gte(from_date)
+						.lte(to_date));*/
+			}
+			  
+			
+			
+			
+			
+			 
+			BuildSearchResponse builder=new BuildSearchResponse();
+			//results=builder.buildFrom(client,build_o,filters,page,search_parent);
+			
+			results=builder.buildFrom_betaABSA_Facets(client,build_o,build_child,
 					page,search_parent, build_enhanced, request);
 
 		//client.close();
