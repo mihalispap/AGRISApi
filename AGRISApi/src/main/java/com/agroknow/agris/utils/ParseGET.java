@@ -30,6 +30,28 @@ public class ParseGET {
 		return "";
 	}
 
+	public String parseFullText(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("fulltext"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+	}
+
 	public String parseUserGroup(HttpServletRequest request)
 	{
 		Enumeration<String> params=request.getParameterNames();
@@ -152,6 +174,28 @@ public class ParseGET {
 			String inner[]=values[i].split("=");
 			
 			if(inner[0].equals("source"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseFullText(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("fulltext"))
 			{
 				if(inner.length>1)
 					return inner[1];

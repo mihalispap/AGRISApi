@@ -69,7 +69,7 @@ public class SearchEndpoint {
 	@ApiOperation(value = "Search entities containing keyword")
 	@RequestMapping( value="/search", method={RequestMethod.GET},
 		/*produces={"application/xml","application/json"}*/
-			produces="text/plain")
+			produces="*/*")
 	@ApiImplicitParams({
 		@ApiImplicitParam(
     			name = "freetext", 
@@ -148,6 +148,18 @@ public class SearchEndpoint {
     			dataType = "string", 
     			paramType = "query", 
     			defaultValue="por"),
+		@ApiImplicitParam(
+    			name = "fulltext", 
+    			value = "fulltext access type ("
+    					+ "leave empty to disregard, "
+    					+ "any - any kind of http access, "
+    					+ "pdf - must have pdf link, "
+    					+ "doi - must have doi link)", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query",
+    			allowableValues ="any,pdf,doi",
+    			defaultValue="any"),
 		/*@ApiImplicitParam(
     			name = "location-ENR", 
     			value = "limit the results by a specific location(s)", 
@@ -1144,6 +1156,49 @@ public class SearchEndpoint {
 						.lte(to_date));*/
 			}
 			  
+
+			String fulltext=parser.parseFullText(request);
+			if(!fulltext.isEmpty())
+			{
+				search_parent=true;
+				
+				//System.out.println(fulltext);
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				
+
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					
+						if(fulltext.equals(("any")))
+						{
+								bool_inner.must(
+										QueryBuilders.wildcardQuery("bibo:uri", "http*")
+										);
+						}
+						else if(fulltext.equals("pdf"))
+						{
+							bool_inner.must(
+									QueryBuilders.wildcardQuery("bibo:uri", "*pdf")
+									);
+						}
+						else if(fulltext.equals("doi"))
+						{
+							bool_inner.must(
+									QueryBuilders.wildcardQuery("bibo:doi", "*")
+									);
+						}
+					
+					bool_q.should(bool_inner);
+				
+				build_o.must(bool_q);
+			}
+				//build_o.must(QueryBuilders.matchQuery("language.value", lang));
+			
+			
+			
+			
+			
 			BuildSearchResponse builder=new BuildSearchResponse();
 			//results=builder.buildFrom(client,build_o,filters,page,search_parent);
 			
@@ -1180,6 +1235,18 @@ public class SearchEndpoint {
     			dataType = "string", 
     			paramType = "query", 
     			defaultValue="woLr1W9KFEhns1jCYpjkTjg8YCb6nG8T4mcTjU1QsTCduanDejr7DLYFNcgrFxSIXZdHR3tH/y30Epr6spOqlg=="),
+		@ApiImplicitParam(
+    			name = "fulltext", 
+    			value = "fulltext access type ("
+    					+ "leave empty to disregard, "
+    					+ "any - any kind of http access, "
+    					+ "pdf - must have pdf link, "
+    					+ "doi - must have doi link)", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query",
+    			allowableValues ="any,pdf,doi",
+    			defaultValue="any"),
 		@ApiImplicitParam(
     			name = "page", 
     			value = "page of the results (0,1...)", 
@@ -1972,6 +2039,47 @@ public class SearchEndpoint {
 
 			//System.out.println("i reached here22");
 			  
+
+			String fulltext=parser.parseFullText(search_query);
+			if(!fulltext.isEmpty())
+			{
+				search_parent=true;
+				
+				//System.out.println(fulltext);
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				
+
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					
+						if(fulltext.equals(("any")))
+						{
+								bool_inner.must(
+										QueryBuilders.wildcardQuery("bibo:uri", "http*")
+										);
+						}
+						else if(fulltext.equals("pdf"))
+						{
+							bool_inner.must(
+									QueryBuilders.wildcardQuery("bibo:uri", "*pdf")
+									);
+						}
+						else if(fulltext.equals("doi"))
+						{
+							bool_inner.must(
+									QueryBuilders.wildcardQuery("bibo:doi", "*")
+									);
+						}
+					
+					bool_q.should(bool_inner);
+				
+				build_o.must(bool_q);
+			}
+				//build_o.must(QueryBuilders.matchQuery("language.value", lang));
+			
+			
+			
 			BuildSearchResponse builder=new BuildSearchResponse();
 			
 			//System.out.println(lang+"\n"+author+"\n"
