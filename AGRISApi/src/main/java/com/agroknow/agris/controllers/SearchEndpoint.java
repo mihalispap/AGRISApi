@@ -1235,7 +1235,7 @@ public class SearchEndpoint {
     			dataType = "string", 
     			paramType = "query", 
     			defaultValue="woLr1W9KFEhns1jCYpjkTjg8YCb6nG8T4mcTjU1QsTCduanDejr7DLYFNcgrFxSIXZdHR3tH/y30Epr6spOqlg=="),
-		@ApiImplicitParam(
+		/*@ApiImplicitParam(
     			name = "fulltext", 
     			value = "fulltext access type ("
     					+ "leave empty to disregard, "
@@ -1246,7 +1246,7 @@ public class SearchEndpoint {
     			dataType = "string", 
     			paramType = "query",
     			allowableValues ="any,pdf,doi",
-    			defaultValue="any"),
+    			defaultValue="any"),*/
 		@ApiImplicitParam(
     			name = "page", 
     			value = "page of the results (0,1...)", 

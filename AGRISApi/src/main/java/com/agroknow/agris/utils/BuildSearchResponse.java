@@ -133,7 +133,8 @@ public class BuildSearchResponse {
 		*/
 		
 		//System.out.println(1);
-		String result="{\"total\":5"
+		String result="{"
+				+ "\"total\":5"
 				+",\"page\":"+page
 				+",\"page_size\":"+facet_size
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
@@ -352,7 +353,21 @@ public class BuildSearchResponse {
 		}
 		
 		//System.out.println(1);
-		String result="{\"total\":"+response.getHits().getTotalHits()
+		String result="{"
+				+ "\"namespaces\":["
+				+ "{\"prefix\":\"dct\",\"value\":\"http://purl.org/dc/terms/\"},"
+				+	"{\"prefix\":\"dc\",\"value\":\"http://purl.org/dc/terms/\"},"
+				+	"{\"prefix\":\"foaf\",\"value\":\"http://xmlns.com/foaf/0.1/\"},"
+				+	"{\"prefix\":\"rdfs\",\"value\":\"http://www.w3.org/2000/01/rdf-schema#\"},"
+				+	"{\"prefix\":\"skos\",\"value\":\"http://www.w3.org/2004/02/skos/core#\"},"
+				+	"{\"prefix\":\"owl\",\"value\":\"http://www.w3.org/2002/07/owl#\"},"
+				+	"{\"prefix\":\"rdf\",\"value\":\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"},"
+				+	"{\"prefix\":\"bibo\",\"value\":\"http://purl.org/ontology/bibo/\"},"
+				+	"{\"prefix\":\"edm\",\"value\":\"http://www.europeana.eu/schemas/edm/\"},"
+				+	"{\"prefix\":\"prov\",\"value\":\"http://www.w3.org/ns/prov#\"},"
+				+	"{\"prefix\":\"schema\",\"value\":\"http://schema.org/\"}"
+				+ "],"
+				+ "\"total\":"+response.getHits().getTotalHits()
 				+",\"page\":"+page
 				+",\"page_size\":"+page_size
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
