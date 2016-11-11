@@ -18,8 +18,8 @@ import com.mongodb.MongoClientOptions;
 
 public class AGRISMongoDB {
 
-	//public static String server="83.212.100.195";
-	public static String server="localhost";
+	public static String server="83.212.100.195";
+	//public static String server="localhost";
 	
 	private MongoClient connect()
 	{
@@ -285,6 +285,34 @@ public class AGRISMongoDB {
 	
 		return sb.toString();
 	}
+	
+
+	public void insertAPIKey(String apikey)
+	{
+		/*TODO:
+		 * 	should have points on operations!*/
+		//MongoClient mongo = this.connect();
+		/*
+		MongoClientOptions options = MongoClientOptions.builder()
+										.socketTimeout(15000)
+										.connectTimeout(60000)
+										.build();
+		*/
+		MongoClient mongo = new MongoClient( server , 27017);
+				
+		DB db = mongo.getDB("agris");
+		DBCollection table = db.getCollection("users");
+		
+		BasicDBObject document = new BasicDBObject();
+		document.put("apikey", apikey);
+		document.put("registered_on", System.currentTimeMillis()/1000);
+		table.insert(document);
+		
+		mongo.close();
+	}
+	
+	
+	
 }
 
 

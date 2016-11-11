@@ -2125,12 +2125,12 @@ public class SearchEndpoint {
 			produces="*/*")
 	@ApiImplicitParams({
 		@ApiImplicitParam(
-    			name = "freetext[TODO-search-on-aspect-categories]", 
-    			value = "???", 
+    			name = "absa_category", 
+    			value = "search for specific absa category", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue=""),
+    			defaultValue="general"),
 		@ApiImplicitParam(
     			name = "polarity", 
     			value = "filter results by polarity (positive, neutral, negative)", 
@@ -2270,6 +2270,44 @@ public class SearchEndpoint {
 			GetConfig config = new GetConfig();
 			//double similarity;
 			
+
+			String absa_category=parser.parseABSACategory(request);
+			if(!absa_category.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=absa_category.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
 
 			String polarity=parser.parsePolarity(request);
 			if(!polarity.isEmpty())
@@ -2588,6 +2626,46 @@ public class SearchEndpoint {
 			GetConfig config = new GetConfig();
 			//double similarity;
 			
+
+
+			String absa_category=parser.parseABSACategory(search_query);
+			if(!absa_category.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=absa_category.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+
 
 			String polarity=parser.parsePolarity(search_query);
 			if(!polarity.isEmpty())
