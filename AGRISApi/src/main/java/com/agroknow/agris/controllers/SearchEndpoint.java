@@ -2132,6 +2132,20 @@ public class SearchEndpoint {
     			paramType = "query", 
     			defaultValue="general"),
 		@ApiImplicitParam(
+    			name = "user_id", 
+    			value = "specific user's id", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="2154405297"),
+		@ApiImplicitParam(
+    			name = "username", 
+    			value = "specific user's name", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="EGrettou"),
+		@ApiImplicitParam(
     			name = "polarity", 
     			value = "filter results by polarity (positive, neutral, negative)", 
     			required = false, 
@@ -2299,6 +2313,82 @@ public class SearchEndpoint {
 						else
 						{
 							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+
+			String user_id=parser.parseUserID(request);
+			if(!user_id.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=user_id.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.id", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.id", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+
+			String username=parser.parseUserName(request);
+			if(!username.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=user_id.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
 							
 						}
 						
@@ -2486,7 +2576,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="aupMqDaEBFZrSUCl2iFKxm5kcMYJETN/LkAlNGF3hzP8VggxKixRhqtNoFhSt+23AGdIkOAPTS6Z$$$___XTyc88zZ1DjNk/9GIKYt3pMot8rcfo7Qreg3BK9LIZiQuhLdLp0l+tz8KEDj6nOK0Xp9elunYM8w$$$___c4CBQZrbkuajTwqGWc4="),
+    			defaultValue="S2esJNLTxVTmUYAKwzKNOjR8Ui6PWiyY/FmKFvIRtxEt6nRe+d7tMscxv53PJY3NcNbks89cHlN8$$$___wiF9CIVHI8Kobusb84QW4IUpP27dlpI="),
 		@ApiImplicitParam(
     			name = "page", 
     			value = "page of the results (0,1...)", 
@@ -2656,6 +2746,45 @@ public class SearchEndpoint {
 						else
 						{
 							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+
+
+			String user_id=parser.parseUserID(search_query);
+			if(!user_id.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=user_id.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.id", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.id", and_values[j]));
 							
 						}
 						

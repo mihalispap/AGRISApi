@@ -74,6 +74,50 @@ public class ParseGET {
 		return "";
 	}
 
+	public String parseUserID(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("user_id"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseUserName(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("username"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+	}
+
 	public String parseFullText(HttpServletRequest request)
 	{
 		Enumeration<String> params=request.getParameterNames();
@@ -240,6 +284,50 @@ public class ParseGET {
 			String inner[]=values[i].split("=");
 			
 			if(inner[0].equals("absa_category"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseUserID(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("user_id"))
+			{
+				if(inner.length>1)
+					return inner[1];
+				return "";
+			}
+		}
+		
+		return "";
+	}
+
+	public String parseUserName(String input)
+	{
+		String value="";
+		
+		input=input.replace("/search?", "");
+		String values[] = input.split("&");
+		
+		for(int i=0;i<values.length;i++)
+		{
+			String inner[]=values[i].split("=");
+			
+			if(inner[0].equals("username"))
 			{
 				if(inner.length>1)
 					return inner[1];
