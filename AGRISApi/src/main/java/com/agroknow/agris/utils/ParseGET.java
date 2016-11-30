@@ -255,6 +255,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -277,6 +279,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -299,6 +303,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -321,6 +327,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -343,6 +351,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -365,6 +375,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search-absa?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -387,6 +399,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search-absa?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -409,6 +423,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search-absa?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -432,6 +448,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search-absa?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -572,6 +590,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -618,6 +638,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -755,6 +777,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -800,6 +824,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -985,6 +1011,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)
@@ -1032,6 +1060,8 @@ public class ParseGET {
 		String value="";
 		
 		input=input.replace("/search?", "");
+		input=input.replace("/agris-1.0", "");
+		
 		String values[] = input.split("&");
 		
 		for(int i=0;i<values.length;i++)

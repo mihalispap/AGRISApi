@@ -1349,7 +1349,7 @@ public class SearchEndpoint {
 			fid = parser.parseFID(request);
 			search_query=mongodb.getFacetQuery(fid);
 			
-			//System.out.println(fid+" matches to:"+search_query);
+			System.out.println("Search query1:"+search_query);
 			
 		}
 		catch(Exception e)
@@ -1358,6 +1358,7 @@ public class SearchEndpoint {
 			try 
 			{
 				search_query=aes.decrypt(fid);
+				System.out.println("Search query2:"+search_query);
 			} 
 			catch (Exception e1) 
 			{
@@ -2144,7 +2145,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="EGrettou"),
+    			defaultValue="egrettou"),
 		@ApiImplicitParam(
     			name = "polarity", 
     			value = "filter results by polarity (positive, neutral, negative)", 
@@ -2362,10 +2363,13 @@ public class SearchEndpoint {
 			}
 
 			String username=parser.parseUserName(request);
+			
+			System.out.println("USERNAME:"+username);
+			
 			if(!username.isEmpty())
 			{		
 				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
-				String or_values[]=user_id.split("OR");
+				String or_values[]=username.split("OR");
 				for(int i=0;i<or_values.length;i++)
 				{
 					String and_values[]=or_values[i].split("AND");
@@ -2755,6 +2759,46 @@ public class SearchEndpoint {
 				build_child.must(bool_q);
 				
 			}
+
+
+			String username=parser.parseUserName(search_query);
+			if(!username.isEmpty())
+			{		
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=username.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+						
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							bool_inner.must(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+						}
+						else
+						{
+							bool_inner.mustNot(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+							
+						}
+						
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+			}
+
 
 
 			String user_id=parser.parseUserID(search_query);

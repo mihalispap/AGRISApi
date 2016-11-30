@@ -76,26 +76,26 @@ public class BuildSearchResponse {
 		SearchResponse response = 
 				searchRequestBuilder
 				.setQuery(bq)
-				.addAggregation(AggregationBuilders.terms("authors")
+				/*.addAggregation(AggregationBuilders.terms("authors")
 						.field("dct:creator.foaf:Person.foaf:name.raw")
 						.size(page*facet_size+facet_size)
-						.order(Terms.Order.count(false)))
+						.order(Terms.Order.count(false)))*/
                 .addAggregation(AggregationBuilders.terms("types")
                 		.field("dct:type.raw")
                 		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("subjects")
+	    		/*.addAggregation(AggregationBuilders.terms("subjects")
 	    				.field("dc:subject.value.raw")
                 		.size(page*facet_size+facet_size)
-                		.order(Terms.Order.count(false)))
+                		.order(Terms.Order.count(false)))*/
 	    		.addAggregation(AggregationBuilders.terms("sources")
 	    				.field("dct:source.rdf:resource.raw")
                 		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("langs")
+	    		/*.addAggregation(AggregationBuilders.terms("langs")
 	    				.field("dct:language")
                 		.size(page*facet_size+facet_size)
-                		.order(Terms.Order.count(false)))
+                		.order(Terms.Order.count(false)))*/
 				.setFrom(page*facet_size)
 				.setSize(facet_size)
 				.execute()
@@ -142,9 +142,9 @@ public class BuildSearchResponse {
 					//+ "	\""+hashed+"\""
 				+"{"+buildFacet(response, "types", page)+""
 				+",{"+buildFacet(response, "sources", page)+""
-				+",{"+buildFacet(response, "authors", page)+""
-				+",{"+buildFacet(response, "subjects", page)+""
-				+",{"+buildFacet(response, "langs", page)
+				//+",{"+buildFacet(response, "authors", page)+""
+				//+",{"+buildFacet(response, "subjects", page)+""
+				//+",{"+buildFacet(response, "langs", page)
 				;
 		 
 		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
@@ -544,7 +544,7 @@ public class BuildSearchResponse {
 		result+="]}";
 		result=result.replace(",]}", "]}");
 		//System.out.println(1);
-		//result=bq.toString()+result;
+		
 		
 		//System.out.println("I RAN");
 		
