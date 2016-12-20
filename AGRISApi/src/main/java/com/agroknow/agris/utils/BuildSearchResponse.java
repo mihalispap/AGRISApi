@@ -36,7 +36,8 @@ import org.json.simple.parser.ParseException;
 public class BuildSearchResponse {
 
 	private int page_size=10;
-	private int facet_size=15;
+	private int facet_size=5;
+	private int absa_facet_size=99;
 
 	public String buildFrom_betaFacets(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
@@ -80,19 +81,19 @@ public class BuildSearchResponse {
 						.field("dct:creator.foaf:Person.foaf:name.raw")
 						.size(page*facet_size+facet_size)
 						.order(Terms.Order.count(false)))*/
-                .addAggregation(AggregationBuilders.terms("types")
+                .addAggregation(AggregationBuilders.terms("type")
                 		.field("dct:type.raw")
                 		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
-	    		/*.addAggregation(AggregationBuilders.terms("subjects")
+	    		.addAggregation(AggregationBuilders.terms("subject")
 	    				.field("dc:subject.value.raw")
                 		.size(page*facet_size+facet_size)
-                		.order(Terms.Order.count(false)))*/
-	    		.addAggregation(AggregationBuilders.terms("sources")
+                		.order(Terms.Order.count(false)))
+                /*.addAggregation(AggregationBuilders.terms("source")
 	    				.field("dct:source.rdf:resource.raw")
                 		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))
-	    		/*.addAggregation(AggregationBuilders.terms("langs")
+	    		.addAggregation(AggregationBuilders.terms("language")
 	    				.field("dct:language")
                 		.size(page*facet_size+facet_size)
                 		.order(Terms.Order.count(false)))*/
@@ -101,7 +102,7 @@ public class BuildSearchResponse {
 				.execute()
 				.actionGet();
 
-		//System.out.println("Search response took me:"+(System.currentTimeMillis()-ctime));
+		System.out.println("Search response took me:"+(System.currentTimeMillis()-ctime));
 		
 		ctime=System.currentTimeMillis();
 		
@@ -134,17 +135,17 @@ public class BuildSearchResponse {
 		
 		//System.out.println(1);
 		String result="{"
-				+ "\"total\":5"
+				+ "\"total\":2"
 				+",\"page\":"+page
 				+",\"page_size\":"+facet_size
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":["
 					//+ "	\""+hashed+"\""
-				+"{"+buildFacet(response, "types", page)+""
-				+",{"+buildFacet(response, "sources", page)+""
+				+"{"+buildFacet(response, "type", page)+""
+				//+",{"+buildFacet(response, "source", page)+""
 				//+",{"+buildFacet(response, "authors", page)+""
-				//+",{"+buildFacet(response, "subjects", page)+""
-				//+",{"+buildFacet(response, "langs", page)
+				+",{"+buildFacet(response, "subject", page)+""
+				///+",{"+buildFacet(response, "language", page)
 				;
 		 
 		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
@@ -169,7 +170,7 @@ public class BuildSearchResponse {
 		//System.out.println("STARTING");
 		
 		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
-	    		.setIndices("sa_tweets");
+	    		.setIndices("sa_tweets_combo");
 		
 		QueryBuilder qb = null;
 
@@ -193,19 +194,19 @@ public class BuildSearchResponse {
 				searchRequestBuilder
 				.setQuery(bq)
 				.addAggregation(AggregationBuilders.terms("polarity")
-						.field("opinions.absa.polarity")
-                		.size(page*facet_size+facet_size)
+						.field("tweet.opinions.polarity")
+                		.size(page*absa_facet_size+absa_facet_size)
                 		.order(Terms.Order.count(false)))
-                .addAggregation(AggregationBuilders.terms("usergroup")
-                		.field("opinions.user_group")
+                /*.addAggregation(AggregationBuilders.terms("usergroup")
+                		.field("tweet.opinions.user_group")
                 		.size(page*facet_size+facet_size)
-                		.order(Terms.Order.count(false)))
+                		.order(Terms.Order.count(false)))*/
                 .addAggregation(AggregationBuilders.terms("aspect_category")
-                		.field("opinions.absa.aspect_category")
-                		.size(page*facet_size+facet_size)
+                		.field("tweet.opinions.aspect_category")
+                		.size(page*absa_facet_size+absa_facet_size)
                 		.order(Terms.Order.count(false)))
                 .addAggregation(AggregationBuilders.dateHistogram("dates")
-                		.field("opinions.created_at")
+                		.field("tweet.created_at")
                 		.interval(DateHistogram.Interval.YEAR)
                 		.format("yyyy")
                 		)
@@ -224,16 +225,16 @@ public class BuildSearchResponse {
 		
 		
 		
-		String result="{\"total\":4"
+		String result="{\"total\":3"
 				+",\"page\":"+page
 				+",\"page_size\":"+facet_size
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":["
 					//+ "	\""+hashed+"\""
 				+"{"+buildFacet(response, "polarity", page)+""
-				+",{"+buildFacet(response, "usergroup", page)+""
+				//+",{"+buildFacet(response, "usergroup", page)+""
 				+",{"+buildFacet(response, "aspect_category", page)+""
-				+",{"+buildFacetHistogram(response, "dates",page)+""
+				+",{"+buildFacetHistogram(response, "dates")+""
 				;
 		 
 		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
@@ -405,7 +406,7 @@ public class BuildSearchResponse {
 		//System.out.println("STARTING");
 		
 		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
-	    		.setIndices("sa_tweets");
+	    		.setIndices("sa_tweets_combo");
 		
 		QueryBuilder qb = null;
 
@@ -428,21 +429,19 @@ public class BuildSearchResponse {
 		SearchResponse response = 
 				searchRequestBuilder
 				.setQuery(bq)
-				/*.addAggregation(AggregationBuilders.terms("authors")
-						.field("creator.Person.name.raw")
-                		.size(0).order(Terms.Order.count(false)))
-                .addAggregation(AggregationBuilders.terms("types")
-                		.field("type.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("resource-types").field("resource.type.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("subjects").field("subject.value.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("sources").field("source.resource.raw")
-                		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("langs").field("language")
-                		.size(0).order(Terms.Order.count(false)))
-                */
+				/*.addAggregation(AggregationBuilders.terms("polarity")
+						.field("tweet.opinions.polarity")
+                		.size(99)
+                		.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.terms("aspect_category")
+                		.field("tweet.opinions.aspect_category")
+                		.size(99)
+                		.order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.dateHistogram("dates")
+                		.field("tweet.created_at")
+                		.interval(DateHistogram.Interval.YEAR)
+                		.format("yyyy")
+                		)*/
 				.setFrom(page*page_size)
 				.setSize(page_size)
 				.execute()
@@ -460,7 +459,7 @@ public class BuildSearchResponse {
 			String id=hit.getId();
 
 			String fulltext="";
-			
+			/*
 			try 
 			{
 				JSONObject json = (JSONObject) new JSONParser().parse(hit.getSourceAsString());
@@ -470,14 +469,12 @@ public class BuildSearchResponse {
 				AGRISMongoDB mongo = new AGRISMongoDB();
 				fulltext = mongo.fetchTweet(tweet_id);
 				
-				//System.out.println(fulltext);
 			} 
 			catch (ParseException e) 
 			{
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
 			}
-			
+			*/
+			fulltext=hit.getSourceAsString();
 			
 			StringBuilder source_value=new StringBuilder(hit.getSourceAsString());
 			
@@ -528,6 +525,9 @@ public class BuildSearchResponse {
 				+",\"page_size\":"+page_size
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":"
+					//+"{"+buildFacet(response, "polarity")+","
+					//+"{"+buildFacet(response, "aspect_category")+","
+					//+"{"+buildFacetHistogram(response, "dates")+""
 					+ "	\""+hashed+"\""
 				///+"{"+buildFacet(response, "resource-types")+""
 				//+ "	{\"facet_name\":\"sources\",\"fid\":\""+hashed+"so\"}"

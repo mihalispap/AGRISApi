@@ -64,7 +64,7 @@ public class ParseGET {
 			param=params.nextElement();
 			param_value=request.getParameter(param);
 			
-			if(param.equalsIgnoreCase("absa_category"))
+			if(param.equalsIgnoreCase("aspect_category"))
 			{
 				//title=StringUtils.trim(param_value);
 				return param_value;
@@ -287,7 +287,7 @@ public class ParseGET {
 		{
 			String inner[]=values[i].split("=");
 			
-			if(inner[0].equals("absa_category"))
+			if(inner[0].equals("aspect_category"))
 			{
 				if(inner.length>1)
 					return inner[1];

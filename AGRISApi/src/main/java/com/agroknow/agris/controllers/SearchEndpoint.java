@@ -2126,26 +2126,26 @@ public class SearchEndpoint {
 			produces="*/*")
 	@ApiImplicitParams({
 		@ApiImplicitParam(
-    			name = "absa_category", 
+    			name = "aspect_category", 
     			value = "search for specific absa category", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
     			defaultValue="general"),
-		@ApiImplicitParam(
+		/*@ApiImplicitParam(
     			name = "user_id", 
     			value = "specific user's id", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="2154405297"),
+    			defaultValue="2154405297"),*/
 		@ApiImplicitParam(
     			name = "username", 
     			value = "specific user's name", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="egrettou"),
+    			defaultValue="seleogr"),
 		@ApiImplicitParam(
     			name = "polarity", 
     			value = "filter results by polarity (positive, neutral, negative)", 
@@ -2159,21 +2159,21 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="2016-03-16"),
+    			defaultValue="2014"),
 		@ApiImplicitParam(
     			name = "to", 
     			value = "tweets <= this date, format YYYY-MM-DD (-MM-DD, are optional)", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue=""),
-		@ApiImplicitParam(
+    			defaultValue="2015"),
+		/*@ApiImplicitParam(
     			name = "user-group", 
     			value = "limit results to those posted by user group(s)", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="123OR456"),
+    			defaultValue="123OR456"),*/
 		@ApiImplicitParam(
     			name = "page", 
     			value = "page of the results (0,1...)", 
@@ -2309,11 +2309,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.aspect_category", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.aspect_category", and_values[j]));
 							
 						}
 						
@@ -2347,11 +2347,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.id", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.id", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.id", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.id", and_values[j]));
 							
 						}
 						
@@ -2386,13 +2386,15 @@ public class SearchEndpoint {
 							and_values[j]=and_values[j].replace("NOT", "");
 						}
 						
+						and_values[j]=and_values[j].toLowerCase();
+						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.user.screen_name", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.user.screen_name", and_values[j]));
 							
 						}
 						
@@ -2426,11 +2428,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("polarity", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.polarity", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("polarity", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.polarity", and_values[j]));
 							
 						}
 						
@@ -2469,11 +2471,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("user_group", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.user_group", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("user_group", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.user_group", and_values[j]));
 							
 						}
 						
@@ -2502,7 +2504,7 @@ public class SearchEndpoint {
 				if(from_date.length()<10)
 				{
 					if(from_date.length()==4)
-						from_date+="-01-01";
+						from_date+="/01/01";
 					else if(from_date.length()==7)
 						from_date+="01";
 				}
@@ -2510,14 +2512,14 @@ public class SearchEndpoint {
 				if(to_date.length()<10)
 				{
 					if(to_date.length()==4)
-						to_date+="-12-31";
+						to_date+="/12/31";
 					else if(to_date.length()==7)
 						to_date+="31";
 				}
 								
 				build_child.must(
 						QueryBuilders
-						.rangeQuery("created_at")
+						.rangeQuery("tweet.created_at")
 						.gte(from_date)
 						.lte(to_date)
 						);	
@@ -2745,11 +2747,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.aspect_category", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.absa.aspect_category", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.aspect_category", and_values[j]));
 							
 						}
 						
@@ -2781,14 +2783,14 @@ public class SearchEndpoint {
 							has_not=true;
 							and_values[j]=and_values[j].replace("NOT", "");
 						}
-						
+						and_values[j]=and_values[j].toLowerCase();
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.user.screen_name", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.screen_name", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.user.screen_name", and_values[j]));
 							
 						}
 						
@@ -2824,11 +2826,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("opinions.id", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.id", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("opinions.id", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.id", and_values[j]));
 							
 						}
 						
@@ -2863,11 +2865,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("polarity", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.polarity", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("polarity", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.polarity", and_values[j]));
 							
 						}
 						
@@ -2906,11 +2908,11 @@ public class SearchEndpoint {
 						
 						if(!has_not)
 						{
-							bool_inner.must(QueryBuilders.termQuery("user_group", and_values[j]));
+							bool_inner.must(QueryBuilders.termQuery("tweet.opinions.user_group", and_values[j]));
 						}
 						else
 						{
-							bool_inner.mustNot(QueryBuilders.termQuery("user_group", and_values[j]));
+							bool_inner.mustNot(QueryBuilders.termQuery("tweet.opinions.user_group", and_values[j]));
 							
 						}
 						
@@ -2939,7 +2941,7 @@ public class SearchEndpoint {
 				if(from_date.length()<10)
 				{
 					if(from_date.length()==4)
-						from_date+="-01-01";
+						from_date+="/01/01";
 					else if(from_date.length()==7)
 						from_date+="01";
 				}
@@ -2947,14 +2949,14 @@ public class SearchEndpoint {
 				if(to_date.length()<10)
 				{
 					if(to_date.length()==4)
-						to_date+="-12-31";
+						to_date+="/12/31";
 					else if(to_date.length()==7)
 						to_date+="31";
 				}
 								
 				build_child.must(
 						QueryBuilders
-						.rangeQuery("created_at")
+						.rangeQuery("tweet.created_at")
 						.gte(from_date)
 						.lte(to_date)
 						);	
