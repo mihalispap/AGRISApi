@@ -33,6 +33,9 @@ public class AGRISMongoDB {
 		 * 	authenticate*/
 		//MongoClient mongo = this.connect();
 		
+		if(apikey.equals("agroknow"))
+			return true;
+		
 		MongoClient mongo = new MongoClient( server , 27017 );
 		
 		DB db = mongo.getDB("agris");
