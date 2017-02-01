@@ -397,6 +397,138 @@ public class BuildSearchResponse {
 	}
 
 
+	public String buildFrom_beta_sfth(Client client, BoolQueryBuilder build_o, 
+			BoolQueryBuilder build_child, int page, boolean parent_check,
+			BoolQueryBuilder build_enhanced, HttpServletRequest request )
+	{
+
+		//System.out.println("STARTING");
+		
+		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
+	    		.setIndices("sfth");
+		
+		QueryBuilder qb = null;
+
+		BoolQueryBuilder bq=QueryBuilders.boolQuery();
+		
+		
+		if(!build_o.hasClauses() && !build_child.hasClauses() && !build_enhanced.hasClauses())
+			parent_check=true;
+		
+		parent_check=false;
+		
+		if(parent_check)
+		{
+			qb=QueryBuilders.hasParentQuery("course",build_o);
+			bq.must(qb);
+		}
+		else
+			qb=build_o;
+		
+		bq.must(build_child);
+		bq.must(qb);
+		bq.must(build_enhanced);
+		
+		
+		System.out.println(bq.toString());
+		SearchResponse response = 
+				searchRequestBuilder
+				.setQuery(bq)
+				/*.addAggregation(AggregationBuilders.terms("authors")
+						.field("creator.Person.name.raw")
+                		.size(0).order(Terms.Order.count(false)))
+                .addAggregation(AggregationBuilders.terms("types")
+                		.field("type.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("resource-types").field("resource.type.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		*/.addAggregation(AggregationBuilders.terms("type").field("course.course_type.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("topics").field("course.topics.value.raw")
+                		.size(0).order(Terms.Order.count(false)))
+                
+				.setFrom(page*page_size)
+				.setSize(page_size)
+				.execute()
+				.actionGet();
+
+		
+		int total=0;
+		
+		String hits="";
+		int counter=0;
+		
+		for(SearchHit hit : response.getHits().getHits())
+		{
+			
+			String id=hit.getId();
+			//System.out.println(counter+") is:"+id);
+			
+			//hits+=specific.getSourceAsString();
+			hits+=hit.getSourceAsString();
+			hits+=",";
+			
+			//hits+="UNTIL|||";
+			//counter++;
+		}
+
+		
+		
+		if(response.getHits().getTotalHits()==0)
+			return "{\"total\":0,\"page\":0,\"page_size:\":0"
+					+",\"time_elapsed\":"+
+						((double)response.getTookInMillis()/1000)
+					+",\"facets\":[]"
+					+ ",\"results\":[]"
+					+ "}";//+bq.toString();
+		
+		String input=request.getRequestURI()+"?"+request.getQueryString();
+		AESencr aes = new AESencr();
+		
+		String hashed="";
+		try
+		{
+			hashed=aes.encrypt(input);
+			hashed=hashed.replace("\r", "$$$");
+			hashed=hashed.replace("\n", "___");
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			hashed="error";
+		}
+		
+		//System.out.println(1);
+		String result="{"
+				+ "\"total\":"+response.getHits().getTotalHits()
+				+",\"page\":"+page
+				+",\"page_size\":"+page_size
+				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
+				+",\"facets\":["
+				//	+ "	\""+hashed+"\""
+				///+"{"+buildFacet(response, "resource-types")+""
+				//+ "	{\"facet_name\":\"sources\",\"fid\":\""+hashed+"so\"}"
+				///+"{"+buildFacet(response, "sources")+""
+				///+",{"+buildFacet(response, "authors")+""
+				//+ "	{\"facet_name\":\"authors\",\"fid\":\""+hashed+"au\"}"
+				///+",{"+buildFacet(response, "subjects")+""
+				//+ "	{\"facet_name\":\"topics\",\"fid\":\""+hashed+"su\"}"
+				+"{"+buildFacet(response, "topics")+""
+				+",{"+buildFacet(response, "type")+""
+				//+ "	{\"facet_name\":\"langs\",\"fid\":\""+hashed+"la\"}"
+				+ "],\"results\":[";
+		 
+		result+=hits;
+		result+="]}";
+		result=result.replace(",]}", "]}");
+		//System.out.println(1);
+		//result=bq.toString()+result;
+		
+		//System.out.println("I RAN");
+		
+		return result;
+	}
+	
 
 	public String buildFrom_betaABSA(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
@@ -571,7 +703,7 @@ public class BuildSearchResponse {
 			if(bucketList.get(i).getKey().equals("object"))
 					continue;
 			
-			if(facet_name.equals("types"))
+			/*if(facet_name.equals("types"))
 			{
 				if(bucketList.get(i).getKey().equals("resource_cimmyt")
 						||
@@ -583,7 +715,7 @@ public class BuildSearchResponse {
 					||
 					bucketList.get(i).getKey().equals("collection"))
 						continue;
-			}
+			}*/
 						
 			fValue+="{\"value\":\""+bucketList.get(i).getKey()+"\", \"count\":"+
 					bucketList.get(i).getDocCount()+"},";

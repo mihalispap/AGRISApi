@@ -2564,7 +2564,6 @@ public class SearchEndpoint {
 			
 	}
 	
-	
 	@ApiOperation(value = "Facets on ABSA")
 	/*@ApiResponses(value = { 
             @ApiResponse(code = 200, message = "Success", response = ResponseABSA.class),
@@ -3001,6 +3000,763 @@ public class SearchEndpoint {
 			
 	}
 	
+	@ApiOperation(value = "Search for training material")
+	@RequestMapping( value="/search-sfth", method={RequestMethod.GET},
+		/*produces={"application/xml","application/json"}*/
+			produces="*/*")
+	@ApiImplicitParams({
+		@ApiImplicitParam(
+    			name = "freetext", 
+    			value = "search entities based on title and description", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="HACCP"),
 	
+		@ApiImplicitParam(
+    			name = "organizer", 
+    			value = "return courses organized by a specific entity", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="Canadian Food Processors Institute"),
+		
+		@ApiImplicitParam(
+    			name = "course_type", 
+    			value = "return courses of a specific type", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue="online course"),
+		
+		@ApiImplicitParam(
+    			name = "start_date", 
+    			value = "return courses that start on a specific date (format: yyyy-mm-dd)", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		
+		@ApiImplicitParam(
+    			name = "page", 
+    			value = "page of the results (0,1...)", 
+    			required = false, 
+    			dataType = "int", 
+    			paramType = "query", 
+    			defaultValue="0"),
+		@ApiImplicitParam(
+    	    	name = "apikey", 
+    	    	value = "apikey", 
+    	    	required = true, 
+    	    	dataType = "string", 
+    	    	paramType = "query", 
+    	    	defaultValue="sfth-dev"),
+		/*@ApiImplicitParam(
+    			name = "format", 
+    			value = "output format", 
+    			required = true, 
+    			dataType = "string", 
+    			paramType = "query",
+    			defaultValue="json"),*/
+		@ApiImplicitParam(
+    			name = "cache", 
+    			value = "use cache", 
+    			required = true, 
+    			dataType = "boolean", 
+    			paramType = "query",
+    			defaultValue="true")
+	})
 	
+	ResponseEntity<String> search_sfth(HttpServletRequest request) throws UnknownHostException { 
+		
+		double init_time=(double)System.currentTimeMillis()/1000;
+		
+		ParseGET parser=new ParseGET();
+		
+		String apikey=parser.parseApiKey(request);
+		
+		AGRISMongoDB mongodb = new AGRISMongoDB();
+		
+		boolean mongo_up=true;
+		
+		String format;
+		//ParseGET parser=new ParseGET();
+		format=parser.parseFormat(request);
+		
+		HttpHeaders response_head=new HttpHeaders();
+		
+		if(format.equals("xml"))
+			response_head.setContentType(new MediaType("application","xml"));
+		else
+			response_head.setContentType(new MediaType("application","json"));
+		
+		
+		try
+		{
+			if(!mongodb.isValidApiKey(apikey))
+			{
+				return new ResponseEntity<String>("{\"error\":\"Api validation Error\"}", response_head, HttpStatus.CREATED);
+			}
+			
+			mongodb.addPoints(apikey, "search", request);
+			
+			try
+			{
+				//boolean use_cache=parser.parseCache(request);			
+				boolean use_cache = false;
+				if(use_cache)
+				{
+					String cached = mongodb.checkCache(request);
+					if(!cached.isEmpty())
+					{
+						System.out.println("CACHE HIT!");			
+						double end_time=(double)System.currentTimeMillis()/1000;
+						//System.out.println("Took:"+(double)(end_time-init_time));
+						//return cached;
+						return new ResponseEntity<String>(cached, response_head, HttpStatus.CREATED);
+
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		catch(Exception e)
+		{
+			mongo_up=false;
+		}
+		
+		Settings settings = ImmutableSettings.settingsBuilder()
+		        .put("cluster.name", "agroknow").build();
+			
+		Client client = ESClient.client;/*new TransportClient(settings)
+				.addTransportAddress(new InetSocketTransportAddress("localhost", 9300));*/
+		        //.addTransportAddress(new InetSocketTransportAddress("host2", 9300));
+		
+		String results="";
+				
+			int page=parser.parsePage(request);
+			
+			boolean search_parent=false;
+			
+			BoolQueryBuilder build =QueryBuilders.boolQuery();
+			
+			QueryBuilder query = null;
+
+
+			BoolQueryBuilder build_o =QueryBuilders.boolQuery();
+			BoolQueryBuilder build_child =QueryBuilders.boolQuery();
+			BoolQueryBuilder build_enhanced=QueryBuilders.boolQuery();
+			
+			
+		    List<FilterBuilder> filters=new LinkedList<>();
+		    
+		    GetConfig config=new GetConfig();
+			int fuzzy;
+			
+			
+			float similarity;
+			try{
+				similarity=Double.valueOf(config.getValue("similarity")).floatValue();
+			}
+			catch(Exception e)
+			{
+				similarity=(float) 0.75;
+			}
+				
+
+			String keywordE=parser.parseKeywordEnhanced(request);
+			if(!keywordE.isEmpty())
+			{
+				//search_parent=true;
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_keyword"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=1;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=1;
+				}
+				
+				BoolQueryBuilder bool_qN=QueryBuilders.boolQuery();
+				/*bool_qN.must(QueryBuilders
+						.fuzzyLikeThisQuery("author.person.name",
+								"resource.title.value")
+						.likeText(keywordE)
+						.maxQueryTerms(2));*/
+				/*
+				bool_qN.should(QueryBuilders
+						.fuzzyLikeThisQuery("title.value")
+						.likeText(keywordE)
+						.maxQueryTerms(2));
+
+				bool_qN.should(QueryBuilders
+						.fuzzyLikeThisQuery("abstract.value")
+						.likeText(keywordE)
+						.maxQueryTerms(2));
+				
+				bool_qN.should(QueryBuilders
+						.fuzzyLikeThisQuery("author.person.name")
+						.likeText(keywordE)
+						.maxQueryTerms(2));
+
+				bool_qN.should(QueryBuilders
+						.fuzzyLikeThisQuery("location.value")
+						.likeText(keywordE)
+						.maxQueryTerms(2));
+				
+				bool_qN.should(QueryBuilders
+						.fuzzyLikeThisQuery("subject.value")
+						.likeText(keywordE)
+						.maxQueryTerms(2));
+				
+				
+				build_enhanced.must(bool_qN);
+				
+				System.out.println(build_enhanced.toString());
+				*/
+				String or_values[]=keywordE.split("OR");
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				
+				for(int j=0;j<or_values.length;j++)
+				{
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					String values[]=or_values[j].split("AND");
+					
+					for(int i=0;i<values.length;i++)
+					{
+
+						//System.out.println(values[i]);
+						boolean has_not=false;
+						
+						BoolQueryBuilder bool_beta=QueryBuilders.boolQuery();
+						
+						if(values[i].contains("NOT"))
+						{
+							has_not=true;
+							values[i]=values[i].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy==1)
+							{
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.title")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.description")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.person.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.organisation.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.location.location_name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.should(QueryBuilders
+										.fuzzyLikeThisQuery("course.topics.value.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								
+								bool_inner.must(bool_beta);
+								
+							}
+							else
+							{
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.title"));
+
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.description"));
+								
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.organizer.person.name"));
+
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.organizer.organization.name"));
+								
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.location.location_name"));
+								
+								bool_beta.should(QueryBuilders
+										.queryString(values[i])
+										.field("course.topics.value.raw"));
+								
+								
+								bool_inner.must(bool_beta);
+								
+							}
+						}
+						else
+						{
+							if(fuzzy_not==1)
+							{
+								
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.title")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.description")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.person.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.organisation.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.location.location_name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								bool_beta.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.topics.value.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(values[i])
+										.maxQueryTerms(2));
+								
+								
+								bool_inner.must(bool_beta);
+								
+							}
+							else
+							{
+
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.title"));
+
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.description"));
+								
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.organizer.organisation.name"));
+
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.organizer.person.name"));
+								
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.location.location_name"));
+								
+								bool_beta.mustNot(QueryBuilders
+										.queryString(values[i])
+										.field("course.topics.value.raw"));
+								
+								
+								bool_inner.must(bool_beta);
+							}
+						}
+						
+					}
+					
+					bool_q.should(bool_inner);
+				}
+				//build_o.must(bool_q);
+				
+				//System.out.println(bool_q.toString());
+				
+				build_enhanced.must(bool_q);
+			}
+
+			String organizer=parser.parseOrganizer(request);
+			System.out.println(organizer);
+			
+			if(!organizer.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=organizer.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.should(QueryBuilders.termQuery("organizer.organisation.name.raw", 
+										and_values[j]));
+								bool_inner.should(QueryBuilders.termQuery("organizer.person.name", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.organizer.organisation.name.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+								bool_inner.must(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.person.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(25)
+										);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.organizer.organisation.name", and_values[j]));
+								bool_inner.mustNot(QueryBuilders.termQuery("course.organizer.person.name", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.organizer.organisation.name")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.organizer.person.name")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+				
+				/*String values[]=author.split("AND");
+				
+				for(int i=0;i<values.length;i++)
+					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
+			}	
+
+			String course_type=parser.parseCourseType(request);
+			
+			
+			if(!course_type.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=course_type.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.course_type.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.course_type.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.course_type.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.course_type.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.course_type.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+				
+				/*String values[]=author.split("AND");
+				
+				for(int i=0;i<values.length;i++)
+					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
+			}			
+
+			String course_date=parser.parseCourseStartDate(request);
+			
+			
+			if(!course_date.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=course_date.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.start_date", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.start_date")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.start_date", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.start_date")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+				
+				/*String values[]=author.split("AND");
+				
+				for(int i=0;i<values.length;i++)
+					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
+			}
+			
+			String from_date=parser.parseFromDate(request);
+			String to_date=parser.parseToDate(request);
+			if(!from_date.isEmpty() || !to_date.isEmpty())
+			{
+								
+				/*if(from_date.isEmpty())
+					from_date=to_date;
+				if(to_date.isEmpty())
+					to_date=from_date;*/
+				
+				if(from_date.isEmpty())
+					from_date="50";
+				if(to_date.isEmpty())
+					to_date="9999";
+				
+				//if(from_date.equals(to_date))
+				//{
+					from_date+="-01-01";
+					to_date+="-12-31";
+				//}
+				
+				build_child.must(
+						QueryBuilders
+						.rangeQuery("date")
+						.gte(from_date)
+						.lte(to_date)
+						);	
+					
+				/*filters.add(FilterBuilders
+						.rangeFilter("date")
+						.gte(from_date)
+						.lte(to_date));*/
+			}
+			  
+			
+			
+			
+			BuildSearchResponse builder=new BuildSearchResponse();
+			//results=builder.buildFrom(client,build_o,filters,page,search_parent);
+			
+			results=builder.buildFrom_beta_sfth(client,build_o,build_child,
+					page,search_parent, build_enhanced, request);
+
+		//client.close();
+		
+		if(format.equals("xml"))
+		{
+			ToXML converter=new ToXML();
+			results=converter.convertToXMLFreeText(results);
+		}
+		
+		if(mongo_up)
+			mongodb.cacheResponse(request, results);
+		
+		//mongodb.
+		
+		//results="";
+		//return results;
+		
+		return new ResponseEntity<String>(results, response_head, HttpStatus.CREATED);
+	    
+	}
+
 }

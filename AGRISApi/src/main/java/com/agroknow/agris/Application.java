@@ -53,8 +53,8 @@ public class Application extends SpringBootServletInitializer{
      
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("AGRIS API")
-                .description("AGRIS entities described through an API")
+                .title("Agroknow API")
+                .description("The online access point to Information entities from the agri-food sector")
                 .termsOfServiceUrl("")
                 .contact("Agroknow")
                 .license("")

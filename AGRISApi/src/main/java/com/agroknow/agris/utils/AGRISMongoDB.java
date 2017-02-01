@@ -33,7 +33,7 @@ public class AGRISMongoDB {
 		 * 	authenticate*/
 		//MongoClient mongo = this.connect();
 		
-		if(apikey.equals("agroknow"))
+		if(apikey.equals("agroknow") || apikey.equals("sfth-dev"))
 			return true;
 		
 		MongoClient mongo = new MongoClient( server , 27017 );
