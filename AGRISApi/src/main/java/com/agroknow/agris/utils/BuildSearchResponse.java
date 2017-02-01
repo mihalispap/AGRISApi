@@ -2,6 +2,7 @@ package com.agroknow.agris.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,6 +30,7 @@ import org.elasticsearch.search.facet.Facet;
 import org.elasticsearch.search.facet.FacetBuilders;
 import org.elasticsearch.search.facet.terms.TermsFacet;
 import org.elasticsearch.search.facet.terms.TermsFacetBuilder;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -141,14 +143,16 @@ public class BuildSearchResponse {
 				+",\"time_elapsed\":"+(double)response.getTookInMillis()/1000
 				+",\"facets\":["
 					//+ "	\""+hashed+"\""
-				+"{"+buildFacet(response, "type", page)+""
+				//+"{"+buildFacet(response, "type", page)+""
+				+"{"+getFacetFromResponse(response, "type", page)+""
 				//+",{"+buildFacet(response, "source", page)+""
 				//+",{"+buildFacet(response, "authors", page)+""
-				+",{"+buildFacet(response, "subject", page)+""
+				//+",{"+buildFacet(response, "subject", page)+""
+				+",{"+getFacetFromResponse(response, "subject", page)+""
 				///+",{"+buildFacet(response, "language", page)
 				;
 		 
-		//System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
+		System.out.println("Total response generation:"+(System.currentTimeMillis()-ctime));
 		
 		//result+=hits;
 		result+="]}";
@@ -160,7 +164,74 @@ public class BuildSearchResponse {
 		
 		return result;
 	}
+	
+	public String getFacetFromResponse(SearchResponse response, String facet_name, int from)
+	{
+		long init_time=System.currentTimeMillis()/1000;
+		try
+		{
+			JSONParser parser = new JSONParser();
+			
+			Terms  terms = response.getAggregations().get(facet_name);
+			Collection<Terms.Bucket> tbuckets = terms.getBuckets();
+			
+			String result="\"total\":"+tbuckets.size()+
+					",\"facet_name\":\""+facet_name+"\""+
+			",\"results\":[";
+				
+			Iterator<Terms.Bucket> it = tbuckets.iterator();
+			int counter=0;
+			
+			while(it.hasNext())
+			{
+				Terms.Bucket bucket = it.next();
+				
+				if(counter<from*facet_size)
+				{
+					counter++;
+					continue;
+				}
+				
+				result+="{\"count\":"+bucket.getDocCount()+", \"value\":\""+bucket.getKey()+"\"}";
+				if(it.hasNext())
+					result+=",";
+			}
 
+			result+="]}";
+			result=result.replace(",]}", "]}");
+			
+			if(true) return result;
+			
+			System.out.println(tbuckets.iterator().next().getKey());
+			System.out.println(tbuckets.iterator().next().getDocCount());
+			System.out.println(tbuckets.toString());
+			//assertThat(buckets.size(), equalTo(3));
+			
+			
+			JSONObject obj=(JSONObject) parser.parse(response.getAggregations().toString());
+			JSONObject aggr=(JSONObject) obj.get("aggregations");
+	
+			System.out.println(aggr);
+			
+			String buckets=((JSONObject)aggr.get(facet_name)).get("buckets").toString();
+			
+			result="\"total\":"+((JSONArray)((JSONObject)aggr.get(facet_name)).get("buckets")).size()+
+					",\"facet_name\":\""+facet_name+"\""+
+			",\"results\":"+buckets.replace("\"doc_count\"", "\"count\"").replace("\"key\"","\"value\"");
+	
+			result+="}";
+			result=result.replace(",]}", "]}");
+	
+			System.out.println("Facet for:"+facet_name+" took:"+(System.currentTimeMillis()/1000-init_time)+"s");
+			
+			return result;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return "}";
+		}
+	}
+	
 
 	public String buildFrom_betaABSA_Facets(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
