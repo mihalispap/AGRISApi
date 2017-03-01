@@ -335,8 +335,7 @@ public class IDEndpoint {
 		return new ResponseEntity<String>(results, response_head, HttpStatus.CREATED);
 		
     }
-    
-
+	
 	@ApiOperation(value = "Get course by ID", nickname = "find entity values by ID")
     @RequestMapping(method = RequestMethod.GET, path="/course/{id}",produces="text/plain"
     /*, produces = {"application/json","application/xml"}*/)
