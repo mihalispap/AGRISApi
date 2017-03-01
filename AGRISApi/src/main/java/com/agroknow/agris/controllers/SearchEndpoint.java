@@ -3030,6 +3030,14 @@ public class SearchEndpoint {
     			defaultValue="online course"),
 		
 		@ApiImplicitParam(
+    			name = "topics", 
+    			value = "return courses with topics (multiple topics separated with an OR statement)", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		
+		@ApiImplicitParam(
     			name = "start_date", 
     			value = "return courses that start on a specific date (format: yyyy-mm-dd)", 
     			required = false, 
@@ -3289,7 +3297,7 @@ public class SearchEndpoint {
 										.maxQueryTerms(2));
 								
 								bool_beta.should(QueryBuilders
-										.fuzzyLikeThisQuery("course.topics.value.raw")
+										.fuzzyLikeThisQuery("course.topics.value")
 										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 										.likeText(values[i])
 										.maxQueryTerms(2));
@@ -3322,7 +3330,7 @@ public class SearchEndpoint {
 								
 								bool_beta.should(QueryBuilders
 										.queryString(values[i])
-										.field("course.topics.value.raw"));
+										.field("course.topics.value"));
 								
 								
 								bool_inner.must(bool_beta);
@@ -3365,7 +3373,7 @@ public class SearchEndpoint {
 										.maxQueryTerms(2));
 								
 								bool_beta.mustNot(QueryBuilders
-										.fuzzyLikeThisQuery("course.topics.value.raw")
+										.fuzzyLikeThisQuery("course.topics.value")
 										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 										.likeText(values[i])
 										.maxQueryTerms(2));
@@ -3399,7 +3407,7 @@ public class SearchEndpoint {
 								
 								bool_beta.mustNot(QueryBuilders
 										.queryString(values[i])
-										.field("course.topics.value.raw"));
+										.field("course.topics.value"));
 								
 								
 								bool_inner.must(bool_beta);
@@ -3609,6 +3617,99 @@ public class SearchEndpoint {
 				for(int i=0;i<values.length;i++)
 					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
 			}			
+			
+			String course_topic=parser.parseCourseTopic(request);
+			
+			
+			if(!course_topic.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=course_topic.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.topics.value", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.topics.value")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.topics.value", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.topics.value")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.topics.value")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+				
+				
+				/*String values[]=author.split("AND");
+				
+				for(int i=0;i<values.length;i++)
+					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
+			}			
+			
 
 			String course_date=parser.parseCourseStartDate(request);
 			

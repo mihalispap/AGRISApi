@@ -607,6 +607,31 @@ public class ParseGET {
 		
 	}
 	
+	public String parseCourseTopic(HttpServletRequest request)
+	{
+		System.out.println(request.getParameterNames());
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("topics"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+	
+	
 	public String parseCourseStartDate(HttpServletRequest request)
 	{
 		Enumeration<String> params=request.getParameterNames();
