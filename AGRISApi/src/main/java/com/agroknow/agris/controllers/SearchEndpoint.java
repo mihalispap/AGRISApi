@@ -3030,8 +3030,64 @@ public class SearchEndpoint {
     			defaultValue="online course"),
 		
 		@ApiImplicitParam(
-    			name = "topics", 
+    			name = "conference_workshop", 
     			value = "return courses with topics (multiple topics separated with an OR statement)", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "industry", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "training_kind", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "topics", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "location_country", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "location_state", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "location_region", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "language", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query", 
+    			defaultValue=""),
+		@ApiImplicitParam(
+    			name = "access_rights", 
+    			value = "", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
@@ -3796,6 +3852,689 @@ public class SearchEndpoint {
 				for(int i=0;i<values.length;i++)
 					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
 			}
+
+			String tkind=parser.parseTKind(request);			
+			if(!tkind.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=tkind.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.training_kind.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.training_kind.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.training_kind.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.training_kind.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.training_kind.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+
+			String industry=parser.parseIndustry(request);			
+			if(!industry.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=industry.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.industry.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.industry.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.industry.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.industry.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.industry.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+
+			String lcountry=parser.parseLCountry(request);			
+			if(!lcountry.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=lcountry.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.location.location_country.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_country.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.location.location_country.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_country.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.location.location_country.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+
+
+			String lregion=parser.parseLRegion(request);			
+			if(!lregion.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=lregion.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.location.location_region.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_region.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.location.location_region.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_region.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.location.location_region.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+
+
+			String lstate=parser.parseLState(request);			
+			if(!lstate.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=lstate.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.location.location_state.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_region.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.location.location_state.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.location.location_state.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.location.location_state.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+
+
+			String language=parser.parseLanguage(request);			
+			if(!language.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=language.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.language.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.language.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.language.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.language.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.language.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+
+
+			String access_rights=parser.parseARights(request);			
+			if(!access_rights.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=access_rights.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.access_rights.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.access_rights.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.access_rights.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.access_rights.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.access_rights.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+
+
+			String con_workshop=parser.parseCWorkshop(request);			
+			if(!con_workshop.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=con_workshop.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.conference_workshop.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.conference_workshop.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.conference_workshop.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.conference_workshop.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.conference_workshop.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+			
 			
 			String from_date=parser.parseFromDate(request);
 			String to_date=parser.parseToDate(request);

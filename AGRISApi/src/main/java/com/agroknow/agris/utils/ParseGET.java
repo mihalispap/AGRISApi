@@ -703,7 +703,7 @@ public class ParseGET {
 		return "";
 	}
 	
-	
+
 	public String parseLanguage(HttpServletRequest request)
 	{
 		Enumeration<String> params=request.getParameterNames();
@@ -717,6 +717,167 @@ public class ParseGET {
 			param_value=request.getParameter(param);
 			
 			if(param.equalsIgnoreCase("language"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseTKind(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("training_kind"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseIndustry(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("industry"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseLCountry(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("location_country"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseARights(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("access_rights"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseCWorkshop(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("conference_workshop"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseLRegion(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("location_region"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
+
+	public String parseLState(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("location_state"))
 			{
 				//title=StringUtils.trim(param_value);
 				return param_value;
