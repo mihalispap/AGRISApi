@@ -317,9 +317,6 @@ public class BuildSearchResponse {
 		return result;
 	}
 
-
-	
-	
 	
 	public String buildFrom_beta(Client client, BoolQueryBuilder build_o, 
 			BoolQueryBuilder build_child, int page, boolean parent_check,
@@ -476,7 +473,7 @@ public class BuildSearchResponse {
 		//System.out.println("STARTING");
 		
 		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
-	    		.setIndices("sfth");
+	    		.setIndices("sfth_dev");
 		
 		QueryBuilder qb = null;
 
@@ -513,9 +510,28 @@ public class BuildSearchResponse {
                 		.size(0).order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("resource-types").field("resource.type.raw")
                 		.size(0).order(Terms.Order.count(false)))
-	    		*/.addAggregation(AggregationBuilders.terms("type").field("course.course_type.raw")
+	    		*/
+				.addAggregation(AggregationBuilders.terms("training-kind").field("course.training_kind.raw")
+                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("industry").field("course.industry.raw")
+                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("country").field("course.location.location_country.raw")
+                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("state").field("course.location.location_state.raw")
+                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("region").field("course.location.location_region.raw")
+                		.size(0).order(Terms.Order.count(false)))
+				.addAggregation(AggregationBuilders.terms("type").field("course.course_type.raw")
                 		.size(0).order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("topics").field("course.topics.value.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("language").field("course.language.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("conference_workshop").field("course.conference_workshop.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("organisation").field("course.organizer.organisation.name.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("access_rights").field("course.access_rights.raw")
                 		.size(0).order(Terms.Order.count(false)))
                 
 				.setFrom(page*page_size)
@@ -585,8 +601,17 @@ public class BuildSearchResponse {
 				///+",{"+buildFacet(response, "subjects")+""
 				//+ "	{\"facet_name\":\"topics\",\"fid\":\""+hashed+"su\"}"
 				+"{"+buildFacet(response, "topics")+""
+				+",{"+buildFacet(response, "training-kind")+""
 				+",{"+buildFacet(response, "type")+""
+				+",{"+buildFacet(response, "industry")+""
+				+",{"+buildFacet(response, "country")+""
+				+",{"+buildFacet(response, "region")+""
 				//+ "	{\"facet_name\":\"langs\",\"fid\":\""+hashed+"la\"}"
+				+",{"+buildFacet(response, "state")+""
+				+",{"+buildFacet(response, "language")+""
+				+",{"+buildFacet(response, "conference_workshop")+""
+				+",{"+buildFacet(response, "organisation")+""
+				+",{"+buildFacet(response, "access_rights")+""
 				+ "],\"results\":[";
 		 
 		result+=hits;
