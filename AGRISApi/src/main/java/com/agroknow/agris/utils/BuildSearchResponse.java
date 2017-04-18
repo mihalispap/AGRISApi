@@ -473,7 +473,7 @@ public class BuildSearchResponse {
 		//System.out.println("STARTING");
 		
 		SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(client)
-	    		.setIndices("sfth_dev");
+	    		.setIndices("sfth");
 		
 		QueryBuilder qb = null;
 
@@ -523,7 +523,9 @@ public class BuildSearchResponse {
                 		.size(0).order(Terms.Order.count(false)))
 				.addAggregation(AggregationBuilders.terms("type").field("course.course_type.raw")
                 		.size(0).order(Terms.Order.count(false)))
-	    		.addAggregation(AggregationBuilders.terms("topics").field("course.topics.value.raw")
+	    		.addAggregation(AggregationBuilders.terms("topics").field("course.topics.raw")
+                		.size(0).order(Terms.Order.count(false)))
+	    		.addAggregation(AggregationBuilders.terms("job_competency").field("course.job_competency.raw")
                 		.size(0).order(Terms.Order.count(false)))
 	    		.addAggregation(AggregationBuilders.terms("language").field("course.language.raw")
                 		.size(0).order(Terms.Order.count(false)))
@@ -602,6 +604,7 @@ public class BuildSearchResponse {
 				//+ "	{\"facet_name\":\"topics\",\"fid\":\""+hashed+"su\"}"
 				+"{"+buildFacet(response, "topics")+""
 				+",{"+buildFacet(response, "training-kind")+""
+				+",{"+buildFacet(response, "job_competency")+""
 				+",{"+buildFacet(response, "type")+""
 				+",{"+buildFacet(response, "industry")+""
 				+",{"+buildFacet(response, "country")+""

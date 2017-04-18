@@ -3011,7 +3011,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="HACCP"),
+    			defaultValue=""),
 	
 		@ApiImplicitParam(
     			name = "organizer", 
@@ -3019,7 +3019,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="Canadian Food Processors Institute"),
+    			defaultValue=""),
 		
 		@ApiImplicitParam(
     			name = "course_type", 
@@ -3027,7 +3027,7 @@ public class SearchEndpoint {
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
-    			defaultValue="online course"),
+    			defaultValue=""),
 		
 		@ApiImplicitParam(
     			name = "conference_workshop", 
@@ -3051,11 +3051,18 @@ public class SearchEndpoint {
     			paramType = "query", 
     			defaultValue=""),
 		@ApiImplicitParam(
-    			name = "topics", 
+    			name = "job_competency", 
     			value = "", 
     			required = false, 
     			dataType = "string", 
     			paramType = "query", 
+    			defaultValue=""),		
+		@ApiImplicitParam(
+    			name = "topics", 
+    			value = "", 
+    			required = false, 
+    			dataType = "string", 
+    			paramType = "query",
     			defaultValue=""),
 		@ApiImplicitParam(
     			name = "location_country", 
@@ -3722,12 +3729,12 @@ public class SearchEndpoint {
 						if(!has_not)
 						{
 							if(fuzzy!=1) {
-								bool_inner.must(QueryBuilders.termQuery("course.topics.value", 
+								bool_inner.must(QueryBuilders.termQuery("course.topics.raw", 
 										and_values[j]));
 							}
 							else {
 								bool_inner.must(QueryBuilders
-									.fuzzyLikeThisQuery("course.topics.value")
+									.fuzzyLikeThisQuery("course.topics.raw")
 									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 									.likeText(and_values[j])
 									.maxQueryTerms(25)
@@ -3737,17 +3744,17 @@ public class SearchEndpoint {
 						else
 						{
 							if(fuzzy_not==0) {
-								bool_inner.mustNot(QueryBuilders.termQuery("course.topics.value", and_values[j]));
+								bool_inner.mustNot(QueryBuilders.termQuery("course.topics.raw", and_values[j]));
 							}
 							else {
 								bool_inner.mustNot(QueryBuilders
-									.fuzzyLikeThisQuery("course.topics.value")
+									.fuzzyLikeThisQuery("course.topics.raw")
 									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 									.likeText(and_values[j])
 									.maxQueryTerms(2)
 									);
 								bool_inner.mustNot(QueryBuilders
-										.fuzzyLikeThisQuery("course.topics.value")
+										.fuzzyLikeThisQuery("course.topics.raw")
 										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 										.likeText(and_values[j])
 										.maxQueryTerms(2)
@@ -3764,7 +3771,7 @@ public class SearchEndpoint {
 				
 				for(int i=0;i<values.length;i++)
 					filters.add(FilterBuilders.termFilter("author.person.name",values[i]));*/
-			}			
+			}
 			
 
 			String course_date=parser.parseCourseStartDate(request);
@@ -3925,6 +3932,90 @@ public class SearchEndpoint {
 									);
 								bool_inner.mustNot(QueryBuilders
 										.fuzzyLikeThisQuery("course.training_kind.raw")
+										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+										.likeText(and_values[j])
+										.maxQueryTerms(2)
+										);
+							}
+						}
+					}
+					bool_q.should(bool_inner);
+				}
+				build_child.must(bool_q);
+			}			
+			
+			String jcompetency=parser.parseJCompetency(request);			
+			if(!jcompetency.isEmpty())
+			{
+				try {
+					fuzzy = Integer.valueOf(config.getValue("fuzzy_author"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy=0;
+				}
+				
+				int fuzzy_not=0;
+
+				try {
+					fuzzy_not = Integer.valueOf(config.getValue("fuzzy_not"));
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					fuzzy_not=0;
+				}
+				
+				BoolQueryBuilder bool_q=QueryBuilders.boolQuery();
+				String or_values[]=jcompetency.split("OR");
+				for(int i=0;i<or_values.length;i++)
+				{
+					String and_values[]=or_values[i].split("AND");
+					BoolQueryBuilder bool_inner=QueryBuilders.boolQuery();
+					
+					for(int j=0;j<and_values.length;j++)
+					{
+
+						boolean has_not=false;
+						
+						if(and_values[j].contains("NOT"))
+						{
+							has_not=true;
+							and_values[j]=and_values[j].replace("NOT", "");
+						}
+						
+						if(!has_not)
+						{
+							if(fuzzy!=1) {
+								bool_inner.must(QueryBuilders.termQuery("course.job_competency.raw", 
+										and_values[j]));
+							}
+							else {
+								bool_inner.must(QueryBuilders
+									.fuzzyLikeThisQuery("course.job_competency.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(25)
+									);
+							}
+						}
+						else
+						{
+							if(fuzzy_not==0) {
+								bool_inner.mustNot(QueryBuilders.termQuery("course.job_competency.raw", and_values[j]));
+							}
+							else {
+								bool_inner.mustNot(QueryBuilders
+									.fuzzyLikeThisQuery("course.job_competency.raw")
+									.fuzziness(Fuzziness.fromSimilarity((float) similarity))
+									.likeText(and_values[j])
+									.maxQueryTerms(2)
+									);
+								bool_inner.mustNot(QueryBuilders
+										.fuzzyLikeThisQuery("course.job_competency.raw")
 										.fuzziness(Fuzziness.fromSimilarity((float) similarity))
 										.likeText(and_values[j])
 										.maxQueryTerms(2)

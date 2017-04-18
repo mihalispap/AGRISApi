@@ -749,6 +749,29 @@ public class ParseGET {
 		return "";
 		
 	}
+	
+	public String parseJCompetency(HttpServletRequest request)
+	{
+		Enumeration<String> params=request.getParameterNames();
+		String param="", param_value="";
+		
+		String title="";
+		
+		while(params.hasMoreElements())
+		{
+			param=params.nextElement();
+			param_value=request.getParameter(param);
+			
+			if(param.equalsIgnoreCase("job_competency"))
+			{
+				//title=StringUtils.trim(param_value);
+				return param_value;
+			}
+		}
+		
+		return "";
+		
+	}
 
 	public String parseIndustry(HttpServletRequest request)
 	{
